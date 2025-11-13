@@ -13,9 +13,12 @@ import EnrollmentsRoutes from "./Kambaz/Enrollments/routes.js";
 
 const app = express();
 
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+const SERVER_ENV = process.env.SERVER_ENV || "development";
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: CLIENT_URL,
     credentials: true,
   })
 );
@@ -25,7 +28,10 @@ app.use(
     secret: "any string",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: false },
+    cookie: { 
+      secure: SERVER_ENV === "production",
+      sameSite: SERVER_ENV === "production" ? "none" : "lax",
+     },
   })
 );
 
