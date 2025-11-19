@@ -6,69 +6,80 @@ export const getCurrentUserRef = { getCurrentUser: () => null };
 export default function UserRoutes(app, db) {
   let currentUser = null;
 
-  const usersDao = UsersDao(db);
+  const usersDao = UsersDao();
   const coursesDao = CoursesDao(db);
 
-  const createUser = (req, res) => {
+  const createUser = async (req, res) => {
     try {
-      const newUser = usersDao.createUser(req.body || {});
-      res.json(newUser);
+      const user = await usersDao.createUser(req.body);
+      res.json(user);
     } catch (e) {
+      console.error(e);
       res.status(500).json({ message: "Error creating user" });
     }
   };
 
-  const findAllUsers = (req, res) => {
-    res.json(usersDao.findAllUsers());
+  const findAllUsers = async (req, res) => {
+    const { role, name } = req.query;
+    if (role) {
+      const users = await usersDao.findUsersByRole(role);
+      res.json(users);
+      return;
+    }
+    if (name) {
+      const users = await usersDao.findUsersByPartialName(name);
+      res.json(users);
+      return;
+    }
+    const users = await usersDao.findAllUsers();
+    res.json(users);
   };
 
-  const findUserById = (req, res) => {
-    const { userId } = req.params;
-    const user = usersDao.findUserById(userId);
-    if (!user) return res.sendStatus(404);
+  const findUserById = async (req, res) => {
+    const user = await usersDao.findUserById(req.params.userId);
     res.json(user);
   };
 
-  const updateUser = (req, res) => {
+  const updateUser = async (req, res) => {
     const { userId } = req.params;
-    const updates = req.body || {};
-    usersDao.updateUser(userId, updates);
-    const updated = usersDao.findUserById(userId);
-    if (currentUser && updated && currentUser._id === updated._id) {
-      currentUser = updated;
-      req.session.currentUser = updated;
+    const userUpdates = req.body;
+
+    await usersDao.updateUser(userId, userUpdates);
+    const current = req.session["currentUser"];
+
+    if (current && current._id === userId) {
+      req.session["currentUser"] = { ...current, ...userUpdates };
     }
-    res.json(updated);
+    res.json(req.session["currentUser"] || currentUser);
   };
 
-  const deleteUser = (req, res) => {
-    const { userId } = req.params;
-    usersDao.deleteUser(userId);
-    if (currentUser && currentUser._id === userId) {
-      currentUser = null;
-      req.session.currentUser = null;
-    }
-    res.sendStatus(200);
+  const deleteUser = async (req, res) => {
+    const status = await usersDao.deleteUser(req.params.userId);
+    res.json(status);
   };
 
-  const signup = (req, res) => {
+  const signup = async (req, res) => {
     const { username } = req.body || {};
-    const existing = usersDao.findUserByUsername(username);
+
+    const existing = await usersDao.findUserByUsername(username);
     if (existing) {
       return res.status(400).json({ message: "Username already in use" });
     }
-    const newUser = usersDao.createUser(req.body || {});
+
+    const newUser = await usersDao.createUser(req.body || {});
     currentUser = newUser;
     req.session.currentUser = newUser;
     res.json(newUser);
   };
 
-  const signin = (req, res) => {
+  const signin = async (req, res) => {
     const { username, password } = req.body || {};
-    const user = usersDao.findUserByCredentials(username, password);
+    const user = await usersDao.findUserByCredentials(username, password);
+
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
     currentUser = user;
     req.session.currentUser = user;
     res.json(user);
@@ -94,6 +105,7 @@ export default function UserRoutes(app, db) {
   const findMyCourses = (req, res) => {
     const user = req.session.currentUser || currentUser;
     if (!user) return res.sendStatus(401);
+
     const myCourses = coursesDao.findCoursesForEnrolledUser(user._id);
     res.json(myCourses);
   };
