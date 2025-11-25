@@ -1,14 +1,12 @@
-// Kambaz/Assignments/dao.js
-import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
 
 export default function AssignmentsDao(db) {
-  function findAssignmentsForCourse(courseId) {
-    return (db.assignments || []).filter((a) => String(a.course) === String(courseId));
+  async function findAssignmentsForCourse(courseId) {
+    return await model.find({ course: courseId });
   }
 
-  function createAssignment(courseId, doc) {
-    const a = {
-      _id: uuidv4(),
+  async function createAssignment(courseId, doc) {
+    const assignment = {
       course: courseId,
       title: doc.title ?? "New Assignment",
       description: doc.description ?? "",
@@ -17,26 +15,35 @@ export default function AssignmentsDao(db) {
       availableFrom: doc.availableFrom ?? null,
       availableUntil: doc.availableUntil ?? null,
     };
-    db.assignments = Array.isArray(db.assignments) ? db.assignments : [];
-    db.assignments = [...db.assignments, a];
-    return a;
+    const created = await model.create(assignment);
+    return created;
   }
 
-  function updateAssignment(assignmentId, updates) {
-    const list = db.assignments || [];
-    const found = list.find((x) => x._id === assignmentId);
-    if (!found) return null;
-    Object.assign(found, updates);
-    return found;
+  async function updateAssignment(assignmentId, updates) {
+    const assignment = await model.findById(assignmentId);
+    if (!assignment) return null;
+
+    assignment.title = updates.title ?? assignment.title;
+    assignment.description = updates.description ?? assignment.description;
+    assignment.points = updates.points ?? assignment.points;
+    assignment.due = updates.due ?? assignment.due;
+    assignment.availableFrom =
+      updates.availableFrom ?? assignment.availableFrom;
+    assignment.availableUntil =
+      updates.availableUntil ?? assignment.availableUntil;
+
+    await assignment.save();
+    return assignment;
   }
 
-  function deleteAssignment(assignmentId) {
-    db.assignments = (db.assignments || []).filter((x) => x._id !== assignmentId);
-    return { status: "ok" };
+  async function deleteAssignment(assignmentId) {
+    const status = await model.deleteOne({ _id: assignmentId });
+    return status;
   }
 
-  function findAssignmentById(assignmentId) {
-    return (db.assignments || []).find((x) => x._id === assignmentId) || null;
+  async function findAssignmentById(assignmentId) {
+    const assignment = await model.findById(assignmentId);
+    return assignment;
   }
 
   return {

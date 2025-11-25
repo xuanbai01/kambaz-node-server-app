@@ -1,42 +1,56 @@
-import { v4 as uuidv4 } from "uuid";
+import model from "./model.js";
 
 export default function EnrollmentsDao(db) {
-  const list = () =>
-    (db.enrollments = Array.isArray(db.enrollments) ? db.enrollments : []);
 
-  const findEnrollmentsForUser = (userId) =>
-    list().filter((e) => String(e.user) === String(userId));
+  async function findEnrollmentsForUser(userId) {
+    return await model.find({ user: userId });
+  }
 
-  const isEnrolled = (userId, courseId) =>
-    list().some((e) => String(e.user) === String(userId) &&
-                       String(e.course) === String(courseId));
+  async function findEnrollmentsForCourse(courseId) {
+    return await model.find({ course: courseId });
+  }
 
-  const enroll = (userId, courseId) => {
-    if (!isEnrolled(userId, courseId)) {
-      const row = { _id: uuidv4(), user: userId, course: courseId };
-      db.enrollments = [...list(), row];
-      return row;
+  async function enroll(userId, courseId) {
+    const existing = await model.findOne({ user: userId, course: courseId });
+    if (existing) {
+      return existing;
     }
-    return null;
-  };
+    return await model.create({
+      user: userId,
+      course: courseId,
+      _id: `${userId}-${courseId}`,
+    });
+  }
 
-  const unenroll = (userId, courseId) => {
-    const before = list().length;
-    db.enrollments = list().filter(
-      (e) => !(String(e.user) === String(userId) &&
-               String(e.course) === String(courseId))
-    );
-    return { removed: before - db.enrollments.length };
-  };
+  function unenroll(userId, courseId) {
+    return model.deleteOne({ user: userId, course: courseId });
+  }
 
-  const findEnrollmentsForCourse = (courseId) =>
-    list().filter((e) => String(e.course) === String(courseId));
+  function unenrollAllUsersFromCourse(courseId) {
+    return model.deleteMany({ course: courseId });
+  }
+
+  async function findCoursesForUser(userId) {
+    const enrollments = await model.find({ user: userId }).populate("course");
+    return enrollments.map((enrollment) => enrollment.course);
+  }
+
+  async function findUsersForCourse(courseId) {
+    const enrollments = await model.find({ course: courseId }).populate("user");
+    return enrollments.map((enrollment) => enrollment.user);
+  }
 
   return {
     findEnrollmentsForUser,
     findEnrollmentsForCourse,
-    isEnrolled,
     enroll,
     unenroll,
+    unenrollAllUsersFromCourse,
+
+    findCoursesForUser,
+    findUsersForCourse,
+
+    enrollUserInCourse: enroll,
+    unenrollUserFromCourse: unenroll,
   };
 }

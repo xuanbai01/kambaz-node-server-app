@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import session from "express-session";
 import mongoose from "mongoose";
+import dotenv from "dotenv";
 
 import Hello from "./Hello.js";
 import Lab5 from "./Lab5/index.js";
@@ -12,7 +13,10 @@ import ModulesRoutes from "./Kambaz/Modules/routes.js";
 import AssignmentsRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentsRoutes from "./Kambaz/Enrollments/routes.js";
 
+dotenv.config();
+console.log("DATABASE_CONNECTION_STRING from env:", process.env.DATABASE_CONNECTION_STRING);
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz"
+console.log("Final CONNECTION_STRING used by mongoose:", CONNECTION_STRING);
 mongoose.connect(CONNECTION_STRING)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.error("MongoDB connection error:", err));
