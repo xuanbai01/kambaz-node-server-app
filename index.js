@@ -15,7 +15,6 @@ import EnrollmentsRoutes from "./Kambaz/Enrollments/routes.js";
 import QuizzesRoutes from "./Kambaz/Quizzes/routes.js";
 
 dotenv.config();
-
 console.log(
   "DATABASE_CONNECTION_STRING from env:",
   process.env.DATABASE_CONNECTION_STRING
@@ -33,28 +32,27 @@ mongoose
 const app = express();
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+const SERVER_ENV = process.env.SERVER_ENV || "development";
 const isProd =
-  process.env.SERVER_ENV === "production" ||
-  process.env.NODE_ENV === "production";
+  SERVER_ENV === "production" || process.env.NODE_ENV === "production";
 
 console.log("CLIENT_URL:", CLIENT_URL);
+console.log("SERVER_ENV:", SERVER_ENV);
 console.log("isProd:", isProd);
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  CLIENT_URL,
-];
+app.set("trust proxy", 1);
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin) {
+      if (!origin) return callback(null, true);
+      if (
+        origin === "http://localhost:3000" ||
+        origin === CLIENT_URL
+      ) {
         return callback(null, true);
       }
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      console.warn("Blocked by CORS origin:", origin);
+      console.warn("Blocked by CORS:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
@@ -63,7 +61,8 @@ app.use(
 
 app.use(
   session({
-    secret: "any string", 
+    secret: "any string",
+    resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
