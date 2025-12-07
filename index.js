@@ -12,6 +12,7 @@ import CourseRoutes from "./Kambaz/Courses/routes.js";
 import ModulesRoutes from "./Kambaz/Modules/routes.js"; 
 import AssignmentsRoutes from "./Kambaz/Assignments/routes.js";
 import EnrollmentsRoutes from "./Kambaz/Enrollments/routes.js";
+import QuizzesRoutes from "./Kambaz/Quizzes/routes.js";
 
 dotenv.config();
 console.log("DATABASE_CONNECTION_STRING from env:", process.env.DATABASE_CONNECTION_STRING);
@@ -51,6 +52,7 @@ CourseRoutes(app, db);
 ModulesRoutes(app, db); 
 AssignmentsRoutes(app, db); 
 EnrollmentsRoutes(app, db, getCurrentUserRef.getCurrentUser);
+QuizzesRoutes(app, db);
 
 Lab5(app);
 Hello(app);
