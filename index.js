@@ -42,16 +42,22 @@ console.log("isProd:", isProd);
 
 app.set("trust proxy", 1);
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  CLIENT_URL,
+  "https://kambaz-next-js-git-a6-xuanbai0110-5999s-projects.vercel.app",
+  "https://kambaz-next-js-git-quizzes-xuanbai0110-5999s-projects.vercel.app",
+];
+
 app.use(
   cors({
     origin(origin, callback) {
       if (!origin) return callback(null, true);
-      if (
-        origin === "http://localhost:3000" ||
-        origin === CLIENT_URL
-      ) {
+
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
+
       console.warn("Blocked by CORS:", origin);
       return callback(new Error("Not allowed by CORS"));
     },
