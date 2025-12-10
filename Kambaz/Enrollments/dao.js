@@ -32,11 +32,18 @@ export default function EnrollmentsDao(db) {
   const findEnrollmentsForCourse = (courseId) =>
     list().filter((e) => String(e.course) === String(courseId));
 
+  const enrollUserInCourse = (userId, courseId) => enroll(userId, courseId);
+
+  const unenrollUserFromCourse = (userId, courseId) =>
+    unenroll(userId, courseId);
+
   return {
     findEnrollmentsForUser,
     findEnrollmentsForCourse,
     isEnrolled,
     enroll,
     unenroll,
+    enrollUserInCourse,
+    unenrollUserFromCourse,
   };
 }

@@ -16,9 +16,17 @@ const app = express();
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 const SERVER_ENV = process.env.SERVER_ENV || "development";
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  CLIENT_URL,
+  "https://kambaz-next-js-git-a6-xuanbai0110-5999s-projects.vercel.app",
+  "https://kambaz-next-js-git-quizzes-xuanbai0110-5999s-projects.vercel.app",
+  "https://kambaz-next-js-git-a5-xuanbai0110-5999s-projects.vercel.app",
+];
+
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin: allowedOrigins,
     credentials: true,
   })
 );
